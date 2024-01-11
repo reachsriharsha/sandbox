@@ -32,6 +32,18 @@ class Company():
     def get_cash_flow_data(self):   
         return self.cash_flow_data
     
+    def set_no_of_shares(self, no_of_sr):
+        self.no_of_shares = no_of_sr
+
+    def get_no_of_shares(self):
+        return self.no_of_shares
+    
+    def set_cmp(self, cmp):
+        self.current_market_price = cmp
+    
+    def get_cmp(self):
+        return self.current_market_price
+    
     def process_input_data(self, df):
         index = 0
         #col_names = []
@@ -133,13 +145,13 @@ class Company():
                   bal_reserves_name = df[col][56]
                   bal_borrowings_name = df[col][57]
                   bal_other_liabilities_name = df[col][58]
-                  bal_tot_liabilities_name = df[col][59]
+                  bal_tot_liabilities_name = "Total Liabilities" #df[col][59]
 
                   bal_net_block_name = df[col][60]
                   bal_cap_wip_name = df[col][61]
                   bal_investments_name = df[col][62]
                   bal_other_assets_name = df[col][63]
-                  bal_tot_assets_name = df[col][64]
+                  bal_tot_assets_name = "Total Assets" #df[col][64]
 
                   bal_receivable_name = df[col][65]
                   bal_inventory_name = df[col][66]
@@ -353,7 +365,7 @@ class Company():
         '''
         pass
 
-    def calculate_ebitda_margin(self):
+    def calculate_financial_ratios(self):
         '''
         
         EBITDA = [Operating Revenues - Operating Expense]
@@ -364,15 +376,165 @@ class Company():
 
         '''
         ebitda_margin = []
+        roe_data = []
+        asset_turnover_data = []
+        finance_leverage_data = []
+        roa_data = []
+        int_cov_ratio_data = []
+        debt_to_equity_ratio_data = []
+        debt_to_asset_ratio_data = []
+        finance_leverage_ratio_data = []
+        fixed_asset_turnover_ratio_data = []
+        working_capital_turnover_data = []
+        val_price_to_sales_data = []
+        book_value_data = []
+        eps_data = []
+        pe_data = []
+
         for i in range(len(self.sales_data['Report Date'])):
+            ##EBIDTA Margin = EBITDA / [Total Revenue - Other Income]
             op_revenue = self.sales_data['Sales'][i] - self.sales_data['Other Income'][i]
             op_expense = (self.sales_data['Raw Material Cost'][i]+self.sales_data['Power and Fuel'][i]+self.sales_data['Other Mfr. Exp'][i]+self.sales_data['Employee Cost'][i]+self.sales_data['Selling and admin'][i]+self.sales_data['Other Expenses'][i]) - (self.sales_data['Depreciation'][i]+self.sales_data['Interest'][i])
             ebitda = op_revenue - op_expense
             ebidta_margin = ebitda/(self.sales_data['Sales'][i]-self.sales_data['Other Income'][i]) 
             ebitda_margin.append(ebidta_margin*100)
-       
+
+            #RoE = Net Profit/Share Holders Equity
+            share_holders_equity = self.balance_sheet_data['Equity Share Capital'][i] + self.balance_sheet_data['Reserves'][i]
+            roe = (self.sales_data['Net profit'][i]/share_holders_equity)*100
+            roe_data.append(roe)
+
+            
+            avg_assets = 0
+            avg_capital_employed = 0
+            if i == 0:
+                avg_assets = self.balance_sheet_data['Total Assets'][i]
+                avg_capital_employed = self.balance_sheet_data['Total Liabilities'][i]
+                avg_tot_equity = self.balance_sheet_data['Total Liabilities'][i] 
+                avg_net_blk = self.balance_sheet_data['Net Block'][i]
+                avg_working_capital = self.balance_sheet_data['Capital Work in Progress'][i]
+            else:
+                avg_assets = (self.balance_sheet_data['Total Assets'][i] + self.balance_sheet_data['Total Assets'][i-1])/2 
+                avg_capital_employed = (self.balance_sheet_data['Total Liabilities'][i] + self.balance_sheet_data['Total Liabilities'][i-1])/2
+                avg_tot_equity = (self.balance_sheet_data['Total Liabilities'][i] + self.balance_sheet_data['Total Liabilities'][i-1])/2 
+                avg_net_blk = self.balance_sheet_data['Net Block'][i] + self.balance_sheet_data['Net Block'][i-1]
+                avg_working_capital = self.balance_sheet_data['Capital Work in Progress'][i] + self.balance_sheet_data['Capital Work in Progress'][i-1]
+
+            #Asset Turnover Ratio = Sales/Total Assets
+            asset_turnover_ratio = self.sales_data['Sales'][i]/avg_assets
+            asset_turnover_data.append(asset_turnover_ratio)
+
+            #Financial Leverage = Total Assets/Share Holders Equity
+            finance_leverage = self.balance_sheet_data['Total Assets'][i]/share_holders_equity
+            finance_leverage_data.append(finance_leverage)
+
+            #RoA = Net Profit+interest*(1-tax rate)/Total Average Assets
+            roa = (self.sales_data['Net profit'][i] + self.sales_data['Interest'][i]*(1-0.3))/avg_assets
+            roa_data.append(roa*100)
+
+            #RoCE = EBIT/Total Average Capital Employed
+            roce = self.sales_data['Operating Profit'][i]/avg_capital_employed
+
+
+            ebit = ebitda - self.sales_data['Depreciation'][i]
+            interest_coverage_ratio = ebit/self.sales_data['Interest'][i]
+            int_cov_ratio_data.append(interest_coverage_ratio)
+
+            total_equity = self.balance_sheet_data['Equity Share Capital'][i] + self.balance_sheet_data['Reserves'][i]
+            total_debt = self.balance_sheet_data['Borrowings'][i]
+            debt_to_equity_ratio = total_debt/total_equity
+            debt_to_equity_ratio_data.append(debt_to_equity_ratio)
+
+            total_assets = self.balance_sheet_data['Total Assets'][i]
+            debt_to_asset_ratio = total_debt/total_assets
+            debt_to_asset_ratio_data.append(debt_to_asset_ratio)
+
+            fin_lev_ratio = avg_assets/avg_tot_equity
+            finance_leverage_ratio_data.append(fin_lev_ratio)
+
+
+
+
+            #Fixed Asset Turnouver Ratio
+            #fixed_asset_turnover_ratio = self.sales_data['Sales'][i]/self.balance_sheet_data['Net Block'][i]
+            fixed_asset_turnover_ratio_data.append(self.sales_data['Sales'][i]/avg_net_blk)
+            
+            #Working Capital Turnover Ratio
+            working_capital_turnover_data.append(self.sales_data['Sales'][i]/avg_working_capital)
+
+             ##### The Valuation Ratio #####
+             #Price to Sales  = current share price / Sales per share
+            #ToDo Check if the share capital is in terms of Crore. If so we need to convert sales values as well. 
+            sales_per_share = self.sales_data['Sales'][i]/self.balance_sheet_data['Equity Share Capital'][i]
+            val_price_to_sales_data.append(self.sales_data['Sales'][i]/sales_per_share)
+            
+             #Price to Book Value Ratio
+            
+            book_value = (self.balance_sheet_data['Equity Share Capital'][i] + self.balance_sheet_data['Reserves'][i])/self.no_of_shares
+            #ToDo check if share capital is in crore then cross match with salges
+            book_value_data.append(book_value)
+
+             #Price to Earnings Ratio
+            eps = self.sales_data['Net profit'][i]/self.balance_sheet_data['Equity Share Capital'][i]
+            eps_data.append(eps)
+
+            pe = self.current_market_price/eps
+            pe_data.append(pe)
+
+
+            
+             
+            
+
+
+
+
+
+
+
         if len(ebitda_margin) > 0:
             self.sales_data['EBITDA Margin'] = ebitda_margin
+
+        if len(roe_data) > 0:
+            self.sales_data['ROE'] = roe_data
+
+        if len(asset_turnover_data) > 0:
+            self.sales_data['Asset Turnover Ratio'] = asset_turnover_data
+
+        if len(finance_leverage_data) > 0:
+            self.sales_data['Financial Leverage'] = finance_leverage_data
+
+        if len(roa_data) > 0:
+            self.sales_data['ROA'] = roa_data
+
+        '''
+            The leverage ratio is a measure of a company's debt relative to its assets.
+            Interest Coverage Ratio/Debt service ratio
+            Debt to Equity Ratio
+            Debt to Asset Ratio
+            Financial Leverage Ratio
+        '''
+
+        if len(int_cov_ratio_data) > 0:
+            self.sales_data['Interest Coverage Ratio'] = int_cov_ratio_data
+
+        if len(debt_to_equity_ratio_data) > 0:
+            self.sales_data['Debt to Equity Ratio'] = debt_to_equity_ratio_data
+        
+        if len(debt_to_asset_ratio_data) > 0:
+            self.sales_data['Debt to Asset Ratio'] = debt_to_asset_ratio_data
+
+        if len(finance_leverage_ratio_data) > 0:
+            self.sales_data['Financial Leverage Ratio'] = finance_leverage_ratio_data
+    
+        if len(fixed_asset_turnover_ratio_data) > 0:
+            self.sales_data['Fixed Asset Turnover Ratio'] = fixed_asset_turnover_ratio_data
+
+        
+            
+        
+
+
 
         print(self.sales_data['EBITDA Margin'])
        
@@ -387,4 +549,4 @@ class Company():
 
         '''
         print("Inside quantitative_analysis")
-        self.calculate_ebitda_margin()
+        self.calculate_financial_ratios()
