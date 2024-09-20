@@ -1,6 +1,6 @@
 from langchain_community.llms import Ollama
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_experimental.llms.ollama_functions import OllamaFunctions
+#from langchain_experimental.llms.ollama_functions import OllamaFunctions
 
 
 
@@ -20,16 +20,16 @@ class SentimentAnalysis:
 
     def predict_sentiment(self, text):
 
-        #llm = Ollama(model="llama3")
-        llm = OllamaFunctions(model="llama3")
+        llm = Ollama(model="llama3")
+        #llm = OllamaFunctions(model="llama3")
         messages = [
             ("system", "You are a helpful assistant that summerizes the given context"),
             ("human", text)
         ]
 
-        structured_response = llm.with_strucured_output(SentimentResult)
+        #structured_response = llm.with_strucured_output(SentimentResult)
 
-        prediction = structured_response.invoke(messages)
+        prediction = llm.invoke(messages)
 
         print(f"AI Response: {prediction}") 
         return prediction
